@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wx xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" UpgradeCode="PUT-GUID-HERE" Version="1.0.0" Language="1033" Name="BioMetric-SYNC" Manufacturer="ProDynamics">
+    <Package InstallerVersion="300" Compressed="yes"/>
+    <Media Id="1" Cabinet="app.cab" EmbedCab="yes" />
+    
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="BioMetric-SYNC"/>
+      </Directory>
+    </Directory>
+    
+    <Feature Id="ProductFeature" Title="Main Feature" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+    
+    <UI>
+      <UIRef Id="WixUI_Minimal" />
+      <Publish Dialog="ExitDialog" 
+               Control="Finish" 
+               Event="DoAction" 
+               Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
+    
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch YourAppName"/>
+    
+    <Property Id="APPLICATION_URL" Value="http://default-url.com"/>
+    <CustomAction Id="SetApplicationUrl" Execute="immediate" Property="APPLICATION_URL" Value="[APPLICATION_URL]"/>
+    
+    <InstallExecuteSequence>
+      <Custom Action="SetApplicationUrl" After="InstallFiles"/>
+    </InstallExecuteSequence>
+  </Product>
+</Wx>
