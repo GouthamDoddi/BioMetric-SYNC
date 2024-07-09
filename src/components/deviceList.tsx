@@ -3,18 +3,17 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Box, Button, List, ListItem, ListItemText, Typography, Tooltip, IconButton } from '@mui/material';
 import RefreshIcon from '../assets/reload';
 import ClearIcon from '../assets/clear';
-
+import UserSync from '../assets/users'
 
 import { Match, SearchResult } from "../types";
 import SyncLog from './syncLog';
-
 
 const DeviceList: React.FC = () => {
     const [devices, setDevices] = useState<Match[]>([]);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [logs, setLogs] = useState<string[]>([]);
     const [remainingTime, setRemainingTime] = useState<number>(0);
-    const [ forceRefresh, setForceRefresh ] = useState<boolean>(false)
+    const [forceRefresh, setForceRefresh] = useState<boolean>(false);
 
     const updateLastRefreshed = () => {
         setLastRefreshed(new Date());
@@ -48,8 +47,6 @@ const DeviceList: React.FC = () => {
     const fetchDevices = async () => {
         try {
             const response: JSON = await invoke('get_all_devices', { companyKey: '' });
-
-
             let data: { 'SearchResult': SearchResult } = JSON.parse(`${response}`);
 
             setDevices(data.SearchResult.MatchList);
@@ -77,13 +74,12 @@ const DeviceList: React.FC = () => {
                 const logs: [] = await invoke('fetch_and_upload_data', { deviceId: match.Device.devIndex });
                 console.log(logs)
                 setLogs(prevLogs => [...prevLogs, ...logs]);
-
-            } catch(error) {
+            } catch (error) {
                 console.log(error, 'error')
                 setLogs(prevLogs => [...prevLogs, 'Error updating data for device ' + match.Device.devName]);
             }
         }
-    }
+    };
 
     const syncDevice = async (devName: string) => {
         try {
@@ -92,6 +88,29 @@ const DeviceList: React.FC = () => {
         } catch (error) {
             console.error('Error syncing device:', error);
             setLogs(prevLogs => [...prevLogs, `Error syncing ${devName}: ${error}`]);
+        }
+    };
+
+    const syncUsers = async () => {
+        if (devices.length) {
+            try {
+                for (let match of devices) {
+                    try {
+                        const logs: [] = await invoke('fetch_and_upload_users_data', { deviceId: match.Device.devIndex }); // Adjust the parameters as needed
+                        console.log(logs);
+                        setLogs(prevLogs => [...prevLogs, ...logs]);
+                    } catch (error) {
+                        console.log(error, 'error')
+                        setLogs(prevLogs => [...prevLogs, 'Error updating users for device ' + match.Device.devName]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing users:', error);
+                setLogs(prevLogs => [...prevLogs, `Error syncing users: ${error}`]);
+            }
+        }
+        else {
+            setLogs(prevLogs => [...prevLogs, 'You need at least one device to get results from.']);
         }
     };
 
@@ -104,8 +123,8 @@ const DeviceList: React.FC = () => {
     };
 
     useEffect(() => {
-        syncDevices()
-    }, [ devices ])
+        syncDevices();
+    }, [devices]);
 
     return (
         <Box>
@@ -134,14 +153,25 @@ const DeviceList: React.FC = () => {
             </List>
 
             <Box display="flex" justifyContent="flex-end" style={{ marginBottom: '-4rem', marginRight: '2rem', justifyContent: 'space-evenly' }} >
-                <Tooltip title="Refresh Now">
-                    <IconButton 
-                        color="primary" 
-                        onClick={() => setForceRefresh(!forceRefresh)}
-                    >
-                        <RefreshIcon />
-                    </IconButton>
-                </Tooltip>
+                <div>
+                    <Tooltip title="Refresh Now">
+                        <IconButton 
+                            color="primary" 
+                            onClick={() => setForceRefresh(!forceRefresh)}
+                        >
+                            <RefreshIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Sync Users">
+                        <IconButton 
+                            color="secondary" 
+                            onClick={syncUsers}
+                        >
+                            <UserSync />
+                        </IconButton>
+                    </Tooltip>
+                </div>
+
                 <Tooltip title="Clear Logs">
                     <IconButton 
                         color="warning" 
@@ -150,6 +180,7 @@ const DeviceList: React.FC = () => {
                         <ClearIcon />
                     </IconButton>
                 </Tooltip>
+
             </Box>
 
             <SyncLog logs={logs} lastRefreshed={lastRefreshed} remainingTime={remainingTime} />

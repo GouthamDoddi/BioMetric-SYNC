@@ -18,7 +18,7 @@ const SyncLog: React.FC<SyncLogProps> = ({ logs, lastRefreshed, remainingTime })
     };
 
     return (
-        <Box mt={4}>
+        <Box mt={4} height="100%">
             <Typography variant="h5" gutterBottom>
                 Sync Logs
             </Typography>

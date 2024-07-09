@@ -83,11 +83,13 @@ impl Into<Bson> for RightPlanInfo {
 
 #[command]
 pub async fn fetch_users_data(device_id: &String) -> Result<String, String> {
-    let url = get_config_url();
+    let url = get_config_url(); // Ensure this returns the correct base URL
 
     let api_url = format!("{}/ISAPI/AccessControl/UserInfo/Search?format=json&devIndex={}", url, device_id);
     let username = "admin";
     let password = "Admin@123";
+
+    // println!("{}", api_url);
 
     let mut headers: HeaderMap = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
@@ -96,9 +98,11 @@ pub async fn fetch_users_data(device_id: &String) -> Result<String, String> {
     let max_results: i32 = 300;
 
     let data = json!({
-        "searchId": "123",
-        "searchResultPosition": search_result_position,
-        "maxResults": max_results
+        "UserInfoSearchCond": {
+            "searchID": "123",
+            "searchResultPosition": search_result_position,
+            "maxResults": max_results
+        }
     });
 
     let client: Client = Client::new();
@@ -109,6 +113,9 @@ pub async fn fetch_users_data(device_id: &String) -> Result<String, String> {
         .send_with_digest_auth(username, password)
         .await
         .map_err(|e| e.to_string())?;
+    
+    // Print the response status
+    // println!("Response Status: {}", response.status());
 
     if !response.status().is_success() {
         return Err(format!("Request failed with status: {}", response.status()));
@@ -116,6 +123,9 @@ pub async fn fetch_users_data(device_id: &String) -> Result<String, String> {
 
     let body = response.text().await.map_err(|e| e.to_string())?;
 
+    // Print the response body
+    // println!("Response Body: {}", body);
+    
     Ok(body)
 }
 
