@@ -46,7 +46,7 @@ async fn fetch_products() -> Result<Vec<FakeStoreProduct>, String> {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet, fetch_products, 
-            get_all_devices, fetch_activity_data, fetch_and_upload_data,
+            get_all_devices,  fetch_and_upload_data,
             fetch_and_upload_users_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

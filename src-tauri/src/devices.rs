@@ -6,6 +6,7 @@ use diqwest::WithDigestAuth;
 use crate::config::get_config_url;
 
 
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult {
     pub MatchList: Vec<Match>,

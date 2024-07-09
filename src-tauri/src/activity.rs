@@ -43,6 +43,8 @@ pub struct Info {
     pub r#type: i32,
     pub verifyNo: i32,
     pub whiteListNo: i32,
+    pub deviceId: Option<String>
+
 }
 
 // Function to convert Info to Document for MongoDB
@@ -89,8 +91,7 @@ fn end_of_day(dt: chrono::DateTime<Utc>) -> chrono::DateTime<Utc> {
     dt.date().and_hms(23, 59, 59)  // Set hours, minutes, and seconds to end of day
 }
 
-#[command]
-pub async fn fetch_activity_data(device_id: String) -> Result<String, String> {
+pub async fn fetch_activity_data(device_id: &String) -> Result<String, String> {
     let url = get_config_url();
 
     let api_url = format!("{}/ISAPI/AccessControl/AcsEvent?format=json&devIndex={}", url, device_id);
@@ -148,7 +149,7 @@ async fn parse_activity_data(body: String) -> Result<Vec<Info>, String> {
 #[command]
 pub async fn fetch_and_upload_data(device_id: String) -> Result<Vec<String>, String> {
     // Fetch activity data (assuming fetch_activity_data is already implemented)
-    let activity_data = fetch_activity_data(device_id).await.map_err(|e| e.to_string())?;
+    let activity_data = fetch_activity_data(&device_id).await.map_err(|e| e.to_string())?;
 
     // Parse the activity data to extract InfoList (assuming parse_activity_data is already implemented)
     let info_list = parse_activity_data(activity_data).await.map_err(|e| e.to_string())?;
@@ -166,15 +167,17 @@ pub async fn fetch_and_upload_data(device_id: String) -> Result<Vec<String>, Str
         Err(e) => return Err(e.to_string()), // Propagate the error if collection retrieval fails
     };
     // Check and insert info list, collecting logs
-    let logs = check_and_insert_info_list(info_list, collection).await;
+    let logs = check_and_insert_info_list(info_list, collection, &device_id).await;
 
     Ok(logs)
 }
 
-async fn check_and_insert_info_list(info_list: Vec<Info>, collection: Collection<Document>) -> Vec<String> {
+async fn check_and_insert_info_list(info_list: Vec<Info>, collection: Collection<Document>, device_id: &String) -> Vec<String> {
     let mut logs = Vec::new();
 
-    for info in info_list {
+    for mut info in info_list {
+        info.deviceId = Some(device_id.to_string());
+
         // Check if the record already exists in MongoDB based on some identifier (e.g., serialNo)
         let filter = doc! { "serialNo": info.serialNo };
         if let Ok(Some(_)) = collection.find_one(filter.clone()).await {
